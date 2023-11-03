@@ -4,9 +4,12 @@ const app = document.getElementById('app');
 app.innerHTML = `
 <h1>JavaScript HTML5 APIs!</h1>
 <div class="uploader" >
-  <div id="item-0" class="dragme" draggable="true">
-  </div>
-  <div class="dropzone">🎯 Drag Here!</div>
+  <h2>Uplaod your files 🌟✨</h2>
+  <p>Accepts only .png .jpg .svg</p>
+  <input type="file" class="files" accepts = "images/*" multiple>
+  <div class="dropzone">🗂️  Drag to Upload</div>
+
+  <div class="list"></div>
 </div>
 
 <style>
@@ -44,16 +47,9 @@ app.innerHTML = `
 const init = () => {
 
 const dropzone = document.querySelector('.dropzone');
-const dragme = document.querySelector('.dragme');
+const files = document.querySelector('.files')
+const list = document.querySelector('.list');
 
-dragme.addEventListener('dragstart', (e)=> 
-{
-  // console.log(e.dataTransfer)
-  // console.log(e.target.id);
-  e.dataTransfer.setData('text/plain', e.target.id)
-}
-
-)
 
 
 dropzone.addEventListener('dragenter' , (e)=> {
@@ -77,7 +73,10 @@ dropzone.addEventListener('dragover' , (e)=>{
   // e.dataTransfer.dropEffect = 'move'
   // e.dataTransfer.dropEffect= 'link'
   //  e.dataTransfer.dropEffect= 'copy'
+
 })
+
+
 
 
 dropzone.addEventListener('drop', (e)=>{
@@ -86,12 +85,73 @@ dropzone.addEventListener('drop', (e)=>{
   e.preventDefault();
   e.stopPropagation();
   e.target.classList.remove('active')
-  console.log('Drop' , e.dataTransfer.getData('text/plain'));
-  const id = e.dataTransfer.getData('text/plain');
-  const element = document.getElementById(id);
-  dropzone.append(element)
+  // console.log('Drop' , e.dataTransfer.getData('text/plain'));
+  // console.log(e.dataTransfer.files);
+  const {files} =e.dataTransfer
+  handleFileUpload(files)
 
+  
 })
+
+
+files.addEventListener('change' , (e)=>{
+  console.log(e,files);
+  const {files} = e.target;
+  handleFileUpload(files)
+})
+
+const uploadFiles = async (files) => {
+  const form = new FormData();
+  console.log(files);
+  [...files].forEach(file => form.append(file.name , file))
+  // console.log([...form.entries()]);
+
+// https://glitch.com/edit/#!/dragdropfiles
+  const request = await fetch('//dragdropfiles.glitch.me/upload' , {
+    method: 'POST',
+    body: form
+  })
+
+  return await request.json();
+}
+
+const showFilePreview = (file)=>{
+  const reader = new FileReader()
+  reader.readAsDataURL(file);
+  reader.addEventListener('load',(e)=>{
+    const div = document.createElement('div');
+    console.log(file);
+    div.innerHTML = `
+    <div style="display: flex">
+    <img
+    src="${e.target.result}"
+    alt="${file.name}"
+    style="width:20px; margin-right:10px"
+    >
+    <p> ${file.name} <span>${file.size} bytes</span></p>
+    </div>
+    `;
+    list.append(div)
+  })
+  // console.log(reader);
+  // console.log(list , file);
+}
+const isAllowedType = (file) =>{
+  return ['image/png' , 'image/jpeg' , 'image/svg+xml'].includes(file.type)
+}
+
+const handleFileUpload = (files)=>{
+  // console.log([...files].filter(isAllowedType));
+  const filesToUpload = [...files].filter(isAllowedType);
+  filesToUpload.forEach(showFilePreview)
+  // console.log(filesToUpload);
+
+  uploadFiles(filesToUpload)
+
+
+}
+document.addEventListener('dragover', (e)=> e.preventDefault())
+document.addEventListener('drop', (e)=> e.preventDefault())
 };
 
 
